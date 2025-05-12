@@ -5,7 +5,7 @@ import axios from "axios"; // Added axios import
 import { FileUploadSection } from "./FileUploadSection";
 // import { CategorySelector } from "./CategorySelector";
 import { FileList } from "./FileList";
-import { IndustryCategory, UploadedFile } from "./types";
+import { UploadedFile } from "./types";
 import { simulateFileUpload } from "@/lib/file-utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,15 +30,19 @@ export function FileOrganizer() {
   }, [uploadCancelFn]);
 
   const handleFilesSelected = useCallback((newFiles: UploadedFile[]) => {
-    // Only take the first file if multiple are selected
     if (newFiles.length === 0) return;
-    
-    // Cancel any existing upload
+  
     if (uploadCancelFn) {
       uploadCancelFn();
     }
-    
-    const newFile = { ...newFiles[0], status: 'uploading' as const };
+  
+    const fileObj = newFiles[0];
+    const newFile: UploadedFile = {
+      ...fileObj,
+      status: 'uploading',
+      file: fileObj.file
+    };
+  
     setFile(newFile);
     
     // Start upload simulation for the new file
@@ -75,46 +79,39 @@ export function FileOrganizer() {
 
   const handleOrganize = useCallback(async () => {
     if (!file) return;
-
+  
     setIsOrganizing(true);
-    
+  
     toast({
       title: 'Organization in progress',
       description: `Sending file "${file.name}" for processing...`
     });
-    console.log("Organizing file:", file);
+  
     try {
-
-      // Make API call using axios
-      const response = await axios.post('/api/organize-file', {
-        fileId: file.id,
-        fileName: file.name,
-        fileType: file.type,
-        // category: selectedCategory
-      });
-      
-      // Handle successful response
+      const bodyFormData = new FormData();
+      bodyFormData.append('file', file.file); // ✅ Correct: actual File object
+  
+      const response = await axios.post(
+        'http://localhost:80/upload', // Replace with your actual endpoint
+        bodyFormData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+  
       setIsOrganizing(false);
-      // toast({
-      //   title: 'Organization complete',
-      //   description: `${file.name} has been processed successfully.`,
-      //   variant: 'success'
-      // });
-      
       console.log("API response:", response.data);
-      
-      // Reset the form after successful organization
       setFile(null);
-      // setSelectedCategory(null);
     } catch (error) {
-      // Handle error
       setIsOrganizing(false);
       toast({
         title: 'Organization failed',
         description: `There was an error processing your file. Please try again.`,
         variant: 'destructive'
       });
-      
+  
       console.error("API error:", error);
     }
   }, [file, toast]);

@@ -10,6 +10,7 @@ export interface UploadedFile {
   lastModified: number;
   uploadProgress: number;
   status: UploadStatus;
+  file : File;
 }
 
 export type IndustryCategory = 

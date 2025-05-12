@@ -38,7 +38,8 @@ export const fileToUploadedFile = (file: File): UploadedFile => {
     type: getFileType(file),
     lastModified: file.lastModified,
     uploadProgress: 0,
-    status: 'idle'
+    status: 'idle',
+    file: file
   };
 };
 
